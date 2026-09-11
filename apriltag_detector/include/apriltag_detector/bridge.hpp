@@ -22,6 +22,7 @@ namespace vision_tools
     rclcpp::Publisher<extender_msgs::msg::SharedControlGoalArray>::SharedPtr goal_pub_;
 
     std::string target_frame_;
+    std::string base_frame_;
 
     std::shared_ptr<tf2_ros::Buffer> tf_buffer_;
     std::shared_ptr<tf2_ros::TransformListener> tf_listener_;

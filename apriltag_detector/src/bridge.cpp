@@ -9,6 +9,8 @@ namespace vision_tools
     // Declare and get parameters
     this->declare_parameter("target_frame", "base_link");
     target_frame_ = this->get_parameter("target_frame").as_string();
+    this->declare_parameter("base_frame", "camera_link");               // add to linked "base_frame" and "camera_link"   R.G 20260710
+    base_frame_ = this->get_parameter("base_frame").as_string();
 
     // Initialize TF2 buffer and listener
     tf_buffer_ = std::make_shared<tf2_ros::Buffer>(this->get_clock());
@@ -38,7 +40,7 @@ namespace vision_tools
     try
     {
       geometry_msgs::msg::TransformStamped transform =
-          tf_buffer_->lookupTransform(target_frame_, msg->header.frame_id, msg->header.stamp,
+          tf_buffer_->lookupTransform(target_frame_, base_frame_, msg->header.stamp,
                                       rclcpp::Duration::from_seconds(0.1));
 
       for (const auto &tag : msg->goal_array)
