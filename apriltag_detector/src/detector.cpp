@@ -78,7 +78,7 @@ namespace vision_tools
     //std::cout<<"INIT ipOpened = "<< cap_.isOpened() << std::endl;
 
 
-    if (!cap_.open(2, cv::CAP_V4L2))    // <--- camera ID ("/dev/video1");
+    if (!cap_.open(0, cv::CAP_V4L2))    // <--- camera ID ("/dev/video1");
     {
       RCLCPP_WARN(rclcpp::get_logger("AprilTagDetector::AprilTagDetector"), "Impossible d'ouvrir la caméra.");
     }
