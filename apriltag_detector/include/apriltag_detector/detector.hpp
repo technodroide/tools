@@ -15,7 +15,7 @@
 #include <apriltag_pose.h>
 #include <tag36h11.h>
 
-#include <cv_bridge/cv_bridge.h>
+#include <cv_bridge/cv_bridge.hpp>
 #include <opencv2/imgproc/imgproc.hpp>
 #include <opencv2/opencv.hpp>
 
