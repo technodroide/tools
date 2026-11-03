@@ -1,5 +1,11 @@
 apriltag_detector:
   ros__parameters:
+    camera_id: 2
+    video_flow_by : "open_cv"
+    topic_kinova_vision_camera_info : "/camera/color/camera_info"
+    topic_kinova_vision_image_raw : "/camera/color/image_raw"
+    topic_usb_cam_camera_info : "/camera_info"
+    topic_usb_cam_image_raw : "/image_raw"
     max_hamming_distance: 1
     tag_sizes:
       "0": 0.075

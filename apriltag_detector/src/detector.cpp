@@ -15,24 +15,34 @@ namespace vision_tools
     apriltag_detector_add_family(td_, tf_);
 
     this->declare_parameter("max_hamming_distance", 1);
+    this->get_parameter("max_hamming_distance", max_hamming_distance_);
+    this->declare_parameter("camera_id", 0);
+    this->get_parameter("camera_id", camera_id_);
+    RCLCPP_INFO(this->get_logger(), "camera_id = %d", camera_id_);
+    this->declare_parameter("video_flow_by", "open_cv");
+    this->get_parameter("video_flow_by", video_flow_by_);
+    RCLCPP_INFO(this->get_logger(), "video_flow_by = %s", video_flow_by_.c_str());
 
-    /*
-    camera_info_sub_ = this->create_subscription<sensor_msgs::msg::CameraInfo>(
-        "/camera_info", 10,
-        std::bind(&AprilTagDetector::cameraInfoCallback, this, std::placeholders::_1));
-    image_sub_ = this->create_subscription<sensor_msgs::msg::Image>(
-        "/image_raw", 10, std::bind(&AprilTagDetector::imageCallback, this, std::placeholders::_1));
-    */
+    this->declare_parameter("topic_usb_cam_camera_info", "/camera_info");
+    this->get_parameter("topic_usb_cam_camera_info", topic_usb_cam_camera_info_);
+    this->declare_parameter("topic_usb_cam_image_raw", "/image_raw");
+    this->get_parameter("topic_usb_cam_image_raw", topic_usb_cam_image_raw_);
+
+    this->declare_parameter("topic_kinova_vision_camera_info", "/camera/color/camera_info");
+    this->get_parameter("topic_kinova_vision_camera_info", topic_kinova_vision_camera_info_);
+    this->declare_parameter("topic_kinova_vision_image_raw", "/camera/color/image_raw");
+    this->get_parameter("topic_kinova_vision_image_raw", topic_kinova_vision_image_raw_);
+
+    // Publisher **************************************************************
     tag_publisher_ =
         this->create_publisher<extender_msgs::msg::SharedControlGoalArray>("/tag_detections", 10);
 
     tf_broadcaster_ = std::make_unique<tf2_ros::TransformBroadcaster>(*this);
 
-
     // publish USB_CAM image_raw and camera_info
-    image_pub_ = this->create_publisher<sensor_msgs::msg::Image>("/image_raw", 1);
-    camera_info_pub_ = this->create_publisher<sensor_msgs::msg::CameraInfo>("/camera_info", 1);
-
+    image_pub_ = this->create_publisher<sensor_msgs::msg::Image>("/apriltag_detector/color/image_raw", 1);
+    camera_info_pub_ = this->create_publisher<sensor_msgs::msg::CameraInfo>("/apriltag_detector/color/camera_info", 1);
+    
     this->get_parameter("max_hamming_distance", max_hamming_distance_);
 
     std::string prefix = "tag_sizes";
@@ -66,26 +76,43 @@ namespace vision_tools
         }
       }
     }
-
     // Check if we actually loaded anything
     if (tag_sizes_.empty())
     {
       RCLCPP_WARN(this->get_logger(),
                   "No tag_sizes were loaded from YAML. Check the node name and YAML indentation.");
     }
-    
-    //cv::VideoCapture cap_(0, cv::CAP_V4L2);//("/dev/video1");
-    //std::cout<<"INIT ipOpened = "<< cap_.isOpened() << std::endl;
 
-
-    if (!cap_.open(0, cv::CAP_V4L2))    // <--- camera ID ("/dev/video1");
-    {
-      RCLCPP_WARN(rclcpp::get_logger("AprilTagDetector::AprilTagDetector"), "Impossible d'ouvrir la caméra.");
+    if (video_flow_by_ == "open_cv"){
+      if (!cap_.open(camera_id_, cv::CAP_V4L2))    // <--- camera_id_ => 1 => "/dev/video1";
+      {
+        RCLCPP_WARN(rclcpp::get_logger("AprilTagDetector::AprilTagDetector"), "Impossible d'ouvrir la caméra.");
+      }
+      std::cout << "Backend : " << cap_.getBackendName() << std::endl;
+      std::cout << "Ouverte : " << cap_.isOpened() << std::endl;
+      cameraInit();
+      timer_ = this->create_wall_timer(33ms, std::bind(&AprilTagDetector::timer_callback, this));      // 1/30Hz = 0.033s => 33ms
     }
-    std::cout << "Backend : " << cap_.getBackendName() << std::endl;
-    std::cout << "Ouverte : " << cap_.isOpened() << std::endl;
-    cameraInit();
-    timer_ = this->create_wall_timer(33ms, std::bind(&AprilTagDetector::timer_callback, this));      // 1/30Hz = 0.033s => 33ms
+
+    // Subscriber **************************************************************
+    if (video_flow_by_ == "kinova_vision"){
+      // kinova_vision undirect flow
+      camera_info_sub_ = this->create_subscription<sensor_msgs::msg::CameraInfo>(
+          topic_kinova_vision_camera_info_, 10,
+          std::bind(&AprilTagDetector::cameraInfoCallback, this, std::placeholders::_1));
+      image_sub_ = this->create_subscription<sensor_msgs::msg::Image>(
+          topic_kinova_vision_image_raw_, 10, std::bind(&AprilTagDetector::imageCallback, this, std::placeholders::_1));
+    }
+    else if (video_flow_by_ == "usb_cam"){
+      // usb_cam undirect flow
+      camera_info_sub_ = this->create_subscription<sensor_msgs::msg::CameraInfo>(
+          topic_usb_cam_camera_info_, 10,
+          std::bind(&AprilTagDetector::cameraInfoCallback, this, std::placeholders::_1));
+      image_sub_ = this->create_subscription<sensor_msgs::msg::Image>(
+          topic_usb_cam_image_raw_, 10, std::bind(&AprilTagDetector::imageCallback, this, std::placeholders::_1));
+    }
+
+
   }
 
   AprilTagDetector::~AprilTagDetector()
@@ -130,7 +157,7 @@ namespace vision_tools
         current_frame_.cols,
         current_frame_.data,
     };
-    
+
     detections_ = apriltag_detector_detect(td_, &current_frame_apriltag_);
     
     extender_msgs::msg::SharedControlGoalArray detection_array_msg;
@@ -284,7 +311,7 @@ namespace vision_tools
     //----------------------------------------
     // Publication
     //----------------------------------------
-    //image_pub_->publish(*image_msg);
+    image_pub_->publish(*image_msg);
     imageCallback(image_msg);
     
     //camera_info_pub_->publish(camera_info);

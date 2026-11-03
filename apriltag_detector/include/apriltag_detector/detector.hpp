@@ -42,6 +42,12 @@ namespace vision_tools
 
     std::unordered_map<int, double> tag_sizes_;
     int max_hamming_distance_;
+    int camera_id_;
+    std::string video_flow_by_;
+    std::string topic_kinova_vision_camera_info_;
+    std::string topic_kinova_vision_image_raw_;
+    std::string topic_usb_cam_camera_info_;
+    std::string topic_usb_cam_image_raw_;
 
     cv::Mat current_frame_;
 
@@ -49,7 +55,7 @@ namespace vision_tools
     double fx_, fy_, cx_, cy_;
 
     rclcpp::Publisher<extender_msgs::msg::SharedControlGoalArray>::SharedPtr tag_publisher_;
-    //rclcpp::Subscription<sensor_msgs::msg::Image>::SharedPtr image_sub_;
+    rclcpp::Subscription<sensor_msgs::msg::Image>::SharedPtr image_sub_;
     rclcpp::Subscription<sensor_msgs::msg::CameraInfo>::SharedPtr camera_info_sub_;
 
     void imageCallback(const sensor_msgs::msg::Image::SharedPtr msg);
