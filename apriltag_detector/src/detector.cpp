@@ -43,8 +43,6 @@ namespace vision_tools
     image_pub_ = this->create_publisher<sensor_msgs::msg::Image>("/apriltag_detector/color/image_raw", 1);
     camera_info_pub_ = this->create_publisher<sensor_msgs::msg::CameraInfo>("/apriltag_detector/color/camera_info", 1);
     
-    this->get_parameter("max_hamming_distance", max_hamming_distance_);
-
     std::string prefix = "tag_sizes";
     auto overrides = this->get_node_parameters_interface()->get_parameter_overrides();
 
