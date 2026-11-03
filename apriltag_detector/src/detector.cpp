@@ -327,13 +327,3 @@ namespace vision_tools
 } // namespace vision_tools
 
 RCLCPP_COMPONENTS_REGISTER_NODE(vision_tools::AprilTagDetector)
-
-/*
-int main(int argc, char * argv[])
-{
-  rclcpp::init(argc, argv);
-  rclcpp::spin(std::make_shared<AprilTagDetector>());
-  rclcpp::shutdown();
-  return 0;
-}
-*/
